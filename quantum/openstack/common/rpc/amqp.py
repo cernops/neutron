@@ -590,7 +590,8 @@ def multicall(conf, context, topic, msg, timeout, connection_pool):
 
     # TODO(pekowski): Remove this flag and the code under the if clause
     #                 in Havana.
-    if not conf.amqp_rpc_single_reply_queue:
+    # (p-draigbrady): This clause is disabled to avoid qpid exchange leaks
+    if False and not conf.amqp_rpc_single_reply_queue:
         conn = ConnectionContext(conf, connection_pool)
         wait_msg = MulticallWaiter(conf, conn, timeout)
         conn.declare_direct_consumer(msg_id, wait_msg)

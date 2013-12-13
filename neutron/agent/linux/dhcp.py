@@ -277,10 +277,13 @@ class Dnsmasq(DhcpLocalProcess):
             ver = re.findall("\d+.\d+", out)[0]
             is_valid_version = float(ver) >= cls.MINIMUM_VERSION
             if not is_valid_version:
-                LOG.warning(_('FAILED VERSION REQUIREMENT FOR DNSMASQ. '
-                              'DHCP AGENT MAY NOT RUN CORRECTLY! '
-                              'Please ensure that its version is %s '
-                              'or above!'), cls.MINIMUM_VERSION)
+                if float(ver) < 2.48:
+                    LOG.warning(_('FAILED VERSION REQUIREMENT FOR DNSMASQ. '
+                                  'DHCP AGENT MAY NOT RUN CORRECTLY! '
+                                  'Please ensure that its version is %s '
+                                  'or above!'), cls.MINIMUM_VERSION)
+                else:
+                    LOG.info(_('dnsmasq version: %s'), ver)
         except (OSError, RuntimeError, IndexError, ValueError):
             LOG.warning(_('Unable to determine dnsmasq version. '
                           'Please ensure that its version is %s '

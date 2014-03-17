@@ -28,6 +28,7 @@ from neutron.common import config
 from neutron import service
 
 from neutron.openstack.common import gettextutils
+from neutron.openstack.common import systemd
 gettextutils.install('neutron', lazy=False)
 
 
@@ -42,6 +43,7 @@ def main():
                    " the '--config-file' option!"))
     try:
         neutron_service = service.serve_wsgi(service.NeutronApiService)
+        systemd.notify_once()
         neutron_service.wait()
     except RuntimeError as e:
         sys.exit(_("ERROR: %s") % e)

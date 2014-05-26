@@ -251,7 +251,7 @@ class TunnelTest(base.BaseTestCase):
                                           self.VETH_MTU)
         self._verify_mock_calls()
 
-    def test_construct_vxlan(self):
+    def _test_construct_vxlan(self):
         with mock.patch.object(ovs_lib, 'get_installed_ovs_klm_version',
                                return_value="1.10") as klm_ver:
             with mock.patch.object(ovs_lib, 'get_installed_ovs_usr_version',

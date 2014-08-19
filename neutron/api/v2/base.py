@@ -24,6 +24,7 @@ from neutron.api import api_common
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.api.v2 import resource as wsgi_resource
+from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.notifier import api as notifier_api
@@ -476,6 +477,10 @@ class Controller(object):
         orig_obj = self._item(request, id, field_list=field_list,
                               parent_id=parent_id)
         orig_obj.update(body[self._resource])
+        # Make a list of attributes to be updated to inform the policy engine
+        # which attributes are set explicitly so that it can distinguish them
+        # from the ones that are set to their default values.
+        orig_obj[const.ATTRIBUTES_TO_UPDATE] = body[self._resource].keys()
         try:
             policy.enforce(request.context,
                            action,

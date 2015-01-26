@@ -27,6 +27,20 @@ from neutron.common import utils
 from neutron.openstack.common import excutils
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
+from oslo.config import cfg
+
+
+cern_metadata_opts = [
+    cfg.StrOpt('metadata_host',
+        default='127.0.0.1', secret=False,
+        help='Host of the metadata server for this hypervisor'),
+    cfg.StrOpt('metadata_port',
+        default='8775', secret=False,
+        help='Port of metadata server for this hypervisor')
+]
+
+CONF = cfg.CONF
+CONF.register_opts(cern_metadata_opts, 'CERN')
 
 LOG = logging.getLogger(__name__)
 
@@ -297,6 +311,10 @@ class IptablesManager(object):
         self.ipv4 = {'filter': IptablesTable(binary_name=self.wrap_name)}
         self.ipv6 = {'filter': IptablesTable(binary_name=self.wrap_name)}
 
+        # CERN - Allow packets to be forwarded to the metadata server
+        self.ipv4['filter'].add_rule('FORWARD', '-j ACCEPT -d %s' % CONF.CERN.metadata_host,
+                                     wrap=False, top=True)
+
         # Add a neutron-filter-top chain. It's intended to be shared
         # among the various nova components. It sits at the very top
         # of FORWARD and OUTPUT.
@@ -310,7 +328,6 @@ class IptablesManager(object):
             tables['filter'].add_chain('local')
             tables['filter'].add_rule('neutron-filter-top', '-j $local',
                                       wrap=False)
-
         # Wrap the built-in chains
         builtin_chains = {4: {'filter': ['INPUT', 'OUTPUT', 'FORWARD']},
                           6: {'filter': ['INPUT', 'OUTPUT', 'FORWARD']}}
@@ -338,6 +355,14 @@ class IptablesManager(object):
                                            (chain), wrap=False)
 
         if not state_less:
+
+            # CERN - Add NAT rule to translate 169.254.169.254:80 to metadata_host:metadata_port
+            self.ipv4['nat'].add_rule('PREROUTING',
+                                      '-d 169.254.169.254/32 -p tcp -m tcp '
+                                      '--dport 80 -j DNAT --to-destination %s:%s'
+                                      % (CONF.CERN.metadata_host, CONF.CERN.metadata_port),
+                                      wrap=False, top=True)
+
             # Add a neutron-postrouting-bottom chain. It's intended to be
             # shared among the various nova components. We set it as the last
             # chain of POSTROUTING chain.

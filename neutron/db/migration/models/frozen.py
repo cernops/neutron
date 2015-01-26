@@ -1836,5 +1836,25 @@ class IdentifierMap(BASEV2, HasTenant):
     csr_ipsec_policy_id = sa.Column(sa.Integer, nullable=False)
 
 
+class Cluster(BASEV2, HasId, HasTenant):
+
+    __tablename__ = 'cern_clusters'
+
+    name = sa.Column(sa.String(255), unique=True, nullable=False)
+
+
+class SubnetCluster(BASEV2):
+
+    __tablename__ = 'cern_subnet_clusters'
+
+    subnet_id = sa.Column(sa.String(36),
+                          sa.ForeignKey('subnets.id'),
+                          primary_key=True, unique=True)
+    cluster_id = sa.Column(sa.String(36),
+                           sa.ForeignKey('cern_clusters.id'),
+                           primary_key=True)
+
+
+
 def get_metadata():
     return BASEV2.metadata

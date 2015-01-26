@@ -167,8 +167,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                         id=uuidutils.generate_uuid(), tenant_id=tenant_id,
                         security_group=security_group_db,
                         direction='ingress',
-                        ethertype=ethertype,
-                        source_group=security_group_db)
+                        ethertype=ethertype)
+                        # source_group=security_group_db)
                     context.session.add(ingress_rule)
 
                 egress_rule = SecurityGroupRule(

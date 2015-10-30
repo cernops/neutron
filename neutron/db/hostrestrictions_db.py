@@ -10,39 +10,44 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sqlalchemy as sa
-from sqlalchemy import orm
-from sqlalchemy.orm import exc as orm_exc
-from oslo.db import exception as db_exc
-
-from neutron.db import common_db_mixin
-from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import db_base_plugin_v2 as base_db
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import uuidutils
 from neutron.extensions import hostrestrictions
-from neutron.plugins.ml2 import cern
+from oslo.config import cfg
+from landbclient import client as landbclient
 import random
 import netaddr
 
+CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
 class HostRestrictionsDbMixin(hostrestrictions.HostRestrictionsPluginBase,
                               base_db.NeutronDbPluginV2):
 
-    def _make_host_dict(self, hostname, all_subnets, available_subnets, ar_subnet, ma_subnet, la_subnet, fields):
-        res = {'hostname': hostname, 
+    def _make_host_dict(self, hostname, all_subnets, available_subnets,
+                        ar_subnet, ma_subnet, la_subnet, fields):
+        res = {'hostname': hostname,
                'all_subnets': all_subnets,
                'available_subnets': available_subnets,
                'available_random_subnet': ar_subnet,
                'most_available_subnet': ma_subnet,
-               'least_available_subnet': la_subnet }
+               'least_available_subnet': la_subnet}
         return self._fields(res, fields)
 
     def _get_subnets_for_host(self, context, hostname):
-        client_landb = cern.LanDB()
+        landb_username = CONF.CERN.landb_username
+        landb_password = CONF.CERN.landb_password
+        landb_hostname = CONF.CERN.landb_hostname
+        landb_port = CONF.CERN.landb_port
+        landb_protocol = CONF.CERN.landb_protocol
+
+        client_landb = landbclient.LanDB(username=landb_username,
+                                         password=landb_password,
+                                         host=landb_hostname,
+                                         port=landb_port,
+                                         protocol=landb_protocol)
         clusters = client_landb.vmGetClusterMembership(hostname)
         subnets = []
         for clusterName in clusters:
@@ -61,9 +66,10 @@ class HostRestrictionsDbMixin(hostrestrictions.HostRestrictionsPluginBase,
             ranges = range_qry.filter_by(subnet_id=subnet).all()
 
             if not ranges:
-                """ If there are no availability ranges, try again after refreshing them """
-                self._rebuild_availability_ranges(context, 
-                                                 [self._get_subnet(context, subnet)])
+                """ If there are no availability ranges,
+                    try again after refreshing them """
+                self._rebuild_availability_ranges(context,
+                            [self._get_subnet(context, subnet)])
                 ranges = range_qry.filter_by(subnet_id=subnet).all()
                 if not ranges:
                     continue
@@ -111,17 +117,20 @@ class HostRestrictionsDbMixin(hostrestrictions.HostRestrictionsPluginBase,
             return ma_subnet
         return None
 
-    def get_host(self, context, id, fields=None): 
+    def get_host(self, context, id, fields=None):
         hostname = id
         all_subnets = self._get_subnets_for_host(context, hostname)
-        available_subnets = self._filter_available_subnets(context, all_subnets)
+        available_subnets = self._filter_available_subnets(context,
+                                                           all_subnets)
         random_available_subnet = random.choice(available_subnets)
-        most_available_subnet = self._find_most_available_subnet(context, available_subnets)
-        least_available_subnet = self._find_least_available_subnet(context, available_subnets)
-        return self._make_host_dict(hostname, 
-                                    all_subnets, 
+        most_available_subnet = self._find_most_available_subnet(context,
+                                                        available_subnets)
+        least_available_subnet = self._find_least_available_subnet(context,
+                                                        available_subnets)
+        return self._make_host_dict(hostname,
+                                    all_subnets,
                                     available_subnets,
                                     random_available_subnet,
                                     most_available_subnet,
-                                    least_available_subnet, 
+                                    least_available_subnet,
                                     fields)

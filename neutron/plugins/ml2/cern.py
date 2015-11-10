@@ -26,8 +26,8 @@ from suds.client import Client
 
 import logging as pylog
 from neutron.plugins.ml2.common import cern_exceptions as exception
-from neutron.openstack.common.gettextutils import _
-from neutron.openstack.common import log as logging
+from neutron.i18n import _
+from oslo_log import log as logging
 from oslo.config import cfg
 
 

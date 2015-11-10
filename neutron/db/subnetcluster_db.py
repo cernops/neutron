@@ -18,7 +18,7 @@ from oslo.db import exception as db_exc
 from neutron.db import common_db_mixin
 from neutron.db import model_base
 from neutron.db import models_v2
-from neutron.openstack.common import log as logging
+from oslo_log import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.extensions import subnetcluster
 from neutron.plugins.ml2 import cern

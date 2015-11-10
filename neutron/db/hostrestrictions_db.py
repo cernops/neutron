@@ -12,7 +12,7 @@
 
 from neutron.db import models_v2
 from neutron.db import db_base_plugin_v2 as base_db
-from neutron.openstack.common import log as logging
+from oslo_log import log as logging
 from neutron.extensions import hostrestrictions
 from oslo.config import cfg
 from landbclient import client as landbclient

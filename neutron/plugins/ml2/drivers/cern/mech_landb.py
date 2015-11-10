@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.openstack.common import log
+from oslo_log import log
 from novaclient.v1_1 import client as novaclient
 from oslo.config import cfg
 from neutron.plugins.ml2 import cern

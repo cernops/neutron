@@ -83,16 +83,25 @@ class CERNLanDBMechanismDriver(api.MechanismDriver):
                           "already exists"), {'instance': instance})
                 raise ml2_exc.MechanismDriverError()
             else:
-
+                vm_location = {'Floor': '0', 'Room': '0', 'Building': '0'}
+                vm_manufacturer = 'KVM'
+                vm_model = 'VIRTUAL MACHINE'
+                vm_os = {'Name': 'LINUX', 'Version': 'UNKNOWN'}
+                vm_tag = 'OPENSTACK VM'
                 try:
-                    client_landb.vm_create(device=instance,
-                                    ip_service=ip_service,
-                                    ip_address=ip_addr,
-                                    mac_address=mac_addr,
-                                    hypervisor_name=hypervisor,
-                                    cluster_name=cluster_name,
-                                    responsible_person=landb_responsible,
-                                    user_person=landb_mainuser)
+                    client_landb.vm_create(vm_name=instance,
+                                    vm_location=vm_location,
+                                    vm_manufacturer=vm_manufacturer,
+                                    vm_model=vm_model,
+                                    vm_os=vm_os,
+                                    vm_responsible=landb_responsible,
+                                    vm_mac=mac_addr,
+                                    vm_cluster=cluster_name,
+                                    vm_parent=hypervisor,
+                                    vm_tag=vm_tag,
+                                    vm_user=landb_mainuser,
+                                    vm_ip=ip_addr,
+                                    vm_ipservice=ip_service)
                     LOG.debug(_("CERN_LANDB: instance %(instance)s created"),
                               {'instance': instance})
                 except cern_exc.CernLanDBUpdate:
